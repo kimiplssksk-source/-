@@ -1,0 +1,204 @@
+-- INVISIBLE SCRIPT by : KIM
+-- ค่าย ORBIT HUB
+if _G.InvisScript then
+    for _, e in pairs(_G.InvisScript) do e:Disconnect() end
+    _G.InvisScript = nil
+end
+
+local Players    = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS        = game:GetService("UserInputService")
+
+local player    = Players.LocalPlayer
+local mouse     = player:GetMouse()
+local invisible = false
+local bodyParts = {}
+local character, humanoid, rootPart
+
+local BACKGROUND_ID = "rbxassetid://5436396975"
+
+local function setupCharacter()
+    character = player.Character or player.CharacterAdded:Wait()
+    humanoid  = character:WaitForChild("Humanoid")
+    rootPart  = character:WaitForChild("HumanoidRootPart")
+    bodyParts = {}
+    for _, v in pairs(character:GetDescendants()) do
+        if v:IsA("BasePart") and v.Transparency == 0 then
+            table.insert(bodyParts, v)
+        end
+    end
+end
+
+local function setInvisible(state)
+    invisible = state
+    for _, v in pairs(bodyParts) do
+        v.Transparency = invisible and 0.5 or 0
+    end
+end
+
+local function buildGui()
+    local existing = player.PlayerGui:FindFirstChild("INVIS_KIM")
+    if existing then existing:Destroy() end
+
+    local sg = Instance.new("ScreenGui")
+    sg.Name = "INVIS_KIM"
+    sg.ResetOnSpawn = false
+    sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+    local main = Instance.new("Frame", sg)
+    main.Size = UDim2.new(0, 160, 0, 75)
+    main.Position = UDim2.new(0.5, -80, 0.5, -37)
+    main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    main.BorderSizePixel = 0
+    main.Active = true
+    main.ClipsDescendants = true
+    Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
+
+    local bgImg = Instance.new("ImageLabel", main)
+    bgImg.Size = UDim2.new(1, 0, 1, 0)
+    bgImg.BackgroundTransparency = 1
+    bgImg.Image = BACKGROUND_ID
+    bgImg.ImageTransparency = 0.6
+    bgImg.ZIndex = 0
+
+    local gradient = Instance.new("UIGradient", main)
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 40)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
+    })
+    gradient.Rotation = 45
+
+    local borderStroke = Instance.new("UIStroke", main)
+    borderStroke.Thickness = 1.5
+    borderStroke.Color = Color3.fromRGB(60, 60, 60)
+    
+    local titleLbl = Instance.new("TextLabel", main)
+    titleLbl.Size = UDim2.new(1, -30, 0, 20)
+    titleLbl.Position = UDim2.new(0, 10, 0, 5)
+    titleLbl.BackgroundTransparency = 1
+    titleLbl.Text = "INVISIBILITY"
+    titleLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    titleLbl.TextSize = 13
+    titleLbl.Font = Enum.Font.Michroma 
+    titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+
+    local byLbl = Instance.new("TextLabel", main)
+    byLbl.Size = UDim2.new(1, -30, 0, 12)
+    byLbl.Position = UDim2.new(0, 10, 0, 22)
+    byLbl.BackgroundTransparency = 1
+    byLbl.Text = "by ORBIT HUB"
+    byLbl.TextColor3 = Color3.fromRGB(150, 150, 150)
+    byLbl.TextSize = 10
+    byLbl.Font = Enum.Font.Jura 
+    byLbl.TextXAlignment = Enum.TextXAlignment.Left
+
+    local isUILocked = false
+    local lockBtn = Instance.new("TextButton", main)
+    lockBtn.Size = UDim2.new(0, 24, 0, 24)
+    lockBtn.Position = UDim2.new(1, -28, 0, 5)
+    lockBtn.BackgroundTransparency = 1
+    lockBtn.Text = "🔓"
+    lockBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    lockBtn.TextSize = 12
+    
+    local btn = Instance.new("TextButton", main)
+    btn.Size = UDim2.new(1, -20, 0, 26)
+    btn.Position = UDim2.new(0, 10, 0, 40)
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Text = "Status: VISIBLE"
+    btn.TextSize = 12
+    btn.Font = Enum.Font.Sarpanch 
+    btn.AutoButtonColor = false
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    
+    local btnStroke = Instance.new("UIStroke", btn)
+    btnStroke.Thickness = 1
+    btnStroke.Color = Color3.fromRGB(70, 70, 70)
+
+    sg.Parent = player:WaitForChild("PlayerGui")
+
+    local function updateUI()
+        if invisible then
+            btn.Text = "Status: INVISIBLE"
+            btn.BackgroundColor3 = Color3.fromRGB(200, 200, 200) 
+            btn.TextColor3 = Color3.fromRGB(0, 0, 0)
+            borderStroke.Color = Color3.fromRGB(255, 255, 255)
+            btnStroke.Color = Color3.fromRGB(255, 255, 255)
+        else
+            btn.Text = "Status: VISIBLE"
+            btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+            borderStroke.Color = Color3.fromRGB(60, 60, 60)
+            btnStroke.Color = Color3.fromRGB(70, 70, 70)
+        end
+    end
+
+    btn.MouseButton1Click:Connect(function()
+        setInvisible(not invisible)
+        updateUI()
+    end)
+
+    lockBtn.MouseButton1Click:Connect(function()
+        isUILocked = not isUILocked
+        lockBtn.Text = isUILocked and "🔒" or "🔓"
+    end)
+
+    local drag, ds, sp = false, nil, nil
+    main.InputBegan:Connect(function(i)
+        if isUILocked then return end 
+        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+            drag = true
+            ds = i.Position
+            sp = main.Position
+        end
+    end)
+    
+    UIS.InputChanged:Connect(function(i)
+        if drag and not isUILocked and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+            local d = i.Position - ds
+            main.Position = UDim2.new(sp.X.Scale, sp.X.Offset + d.X, sp.Y.Scale, sp.Y.Offset + d.Y)
+        end
+    end)
+    
+    UIS.InputEnded:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+            drag = false
+        end
+    end)
+
+    return updateUI
+end
+
+setupCharacter()
+local updateUI = buildGui()
+
+local events = {}
+
+events[1] = mouse.KeyDown:Connect(function(key)
+    if key:lower() == "g" then
+        setInvisible(not invisible)
+        if updateUI then updateUI() end
+    end
+end)
+
+events[2] = RunService.Heartbeat:Connect(function()
+    if invisible and rootPart and humanoid then
+        local cf     = rootPart.CFrame
+        local camOff = humanoid.CameraOffset
+        rootPart.CFrame = cf * CFrame.new(0, -200000, 0)
+        humanoid.CameraOffset = Vector3.new(camOff.X, camOff.Y + 200000, camOff.Z)
+        RunService.RenderStepped:Wait()
+        rootPart.CFrame = cf
+        humanoid.CameraOffset = camOff
+    end
+end)
+
+events[3] = player.CharacterAdded:Connect(function()
+    invisible = false
+    setupCharacter()
+    updateUI = buildGui()
+end)
+
+_G.InvisScript = events
+print("B&W Edition Invisible Script by KIM loaded")
