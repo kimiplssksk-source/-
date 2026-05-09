@@ -1,0 +1,823 @@
+--// Aether UI Library
+--// Designed by: [Your Name]
+--// Version: 1.0.0
+
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+--// Configuration
+local Aether = {
+    Theme = {
+        Background = Color3.fromRGB(10, 10, 15),
+        Surface = Color3.fromRGB(20, 20, 30),
+        Primary = Color3.fromRGB(124, 58, 237),    -- สีม่วง Neon
+        Secondary = Color3.fromRGB(6, 182, 212),   -- สีฟ้า Cyan
+        Accent = Color3.fromRGB(236, 72, 153),     -- สีชมพู
+        Text = Color3.fromRGB(255, 255, 255),
+        TextDark = Color3.fromRGB(160, 160, 170),
+        Border = Color3.fromRGB(255, 255, 255),
+        Gradient = {
+            {0, Color3.fromRGB(124, 58, 237)},
+            {0.5, Color3.fromRGB(6, 182, 212)},
+            {1, Color3.fromRGB(236, 72, 153)}
+        }
+    },
+    Settings = {
+        AnimationSpeed = 0.4,
+        EasingStyle = Enum.EasingStyle.Quint,
+        EasingDirection = Enum.EasingDirection.Out,
+        CornerRadius = UDim.new(0, 12),
+        StrokeThickness = 2
+    }
+}
+
+--// Utility Functions
+local function CreateGradient(parent, colorPoints, rotation, transparency)
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new(colorPoints)
+    gradient.Rotation = rotation or 45
+    if transparency then
+        gradient.Transparency = NumberSequence.new(transparency)
+    end
+    gradient.Parent = parent
+    return gradient
+end
+
+local function CreateStroke(parent, color, thickness)
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = color or Aether.Theme.Border
+    stroke.Thickness = thickness or Aether.Settings.StrokeThickness
+    stroke.Transparency = 0.8
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Parent = parent
+    return stroke
+end
+
+local function CreateCorner(parent, radius)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = radius or Aether.Settings.CornerRadius
+    corner.Parent = parent
+    return corner
+end
+
+local function CreateShadow(parent)
+    local shadow = Instance.new("ImageLabel")
+    shadow.Name = "Shadow"
+    shadow.BackgroundTransparency = 1
+    shadow.Image = "rbxassetid://131604521937076" -- หรือใช้ Shadow ของคุณเอง
+    shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    shadow.ImageTransparency = 0.6
+    shadow.ScaleType = Enum.ScaleType.Slice
+    shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+    shadow.Size = UDim2.new(1, 20, 1, 20)
+    shadow.Position = UDim2.new(0, -10, 0, -10)
+    shadow.ZIndex = parent.ZIndex - 1
+    shadow.Parent = parent
+    return shadow
+end
+
+local function Tween(obj, properties, duration, delay)
+    local tween = TweenService:Create(obj, TweenInfo.new(
+        duration or Aether.Settings.AnimationSpeed,
+        Aether.Settings.EasingStyle,
+        Aether.Settings.EasingDirection,
+        0, false, delay or 0
+    ), properties)
+    tween:Play()
+    return tween
+end
+
+--// Main GUI Container
+function Aether:Init()
+    -- ScreenGui
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "AetherHub"
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    ScreenGui.Parent = playerGui
+    
+    -- Main Frame (พื้นหลังหลักแบบ Glassmorphism)
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Name = "MainFrame"
+    MainFrame.Size = UDim2.new(0, 600, 0, 400)
+    MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
+    MainFrame.BackgroundColor3 = Aether.Theme.Background
+    MainFrame.BackgroundTransparency = 0.15
+    MainFrame.BorderSizePixel = 0
+    MainFrame.ClipsDescendants = true
+    MainFrame.Parent = ScreenGui
+    
+    CreateCorner(MainFrame, UDim.new(0, 16))
+    
+    -- Gradient Border (ขอบไล่สี)
+    local BorderFrame = Instance.new("Frame")
+    BorderFrame.Name = "Border"
+    BorderFrame.Size = UDim2.new(1, 4, 1, 4)
+    BorderFrame.Position = UDim2.new(0, -2, 0, -2)
+    BorderFrame.BackgroundTransparency = 1
+    BorderFrame.ZIndex = 0
+    BorderFrame.Parent = MainFrame
+    
+    local BorderStroke = Instance.new("UIStroke")
+    BorderStroke.Thickness = 2
+    BorderStroke.Parent = BorderFrame
+    
+    CreateGradient(BorderStroke, {
+        ColorSequenceKeypoint.new(0, Aether.Theme.Primary),
+        ColorSequenceKeypoint.new(0.5, Aether.Theme.Secondary),
+        ColorSequenceKeypoint.new(1, Aether.Theme.Accent)
+    }, 90)
+    
+    --// Header (แถบด้านบน)
+    local Header = Instance.new("Frame")
+    Header.Name = "Header"
+    Header.Size = UDim2.new(1, 0, 0, 50)
+    Header.BackgroundColor3 = Aether.Theme.Surface
+    Header.BackgroundTransparency = 0.5
+    Header.BorderSizePixel = 0
+    Header.Parent = MainFrame
+    
+    CreateCorner(Header, UDim.new(0, 0))
+    
+    -- Header Gradient Line
+    local HeaderLine = Instance.new("Frame")
+    HeaderLine.Name = "GradientLine"
+    HeaderLine.Size = UDim2.new(1, 0, 0, 3)
+    HeaderLine.Position = UDim2.new(0, 0, 1, -3)
+    HeaderLine.BorderSizePixel = 0
+    HeaderLine.Parent = Header
+    
+    CreateGradient(HeaderLine, {
+        ColorSequenceKeypoint.new(0, Aether.Theme.Primary),
+        ColorSequenceKeypoint.new(0.5, Aether.Theme.Secondary),
+        ColorSequenceKeypoint.new(1, Aether.Theme.Accent)
+    }, 0)
+    
+    -- Title
+    local Title = Instance.new("TextLabel")
+    Title.Name = "Title"
+    Title.Size = UDim2.new(0, 200, 1, 0)
+    Title.Position = UDim2.new(0, 20, 0, 0)
+    Title.BackgroundTransparency = 1
+    Title.Text = "⚡ AETHER HUB"
+    Title.TextColor3 = Aether.Theme.Text
+    Title.TextSize = 22
+    Title.Font = Enum.Font.GothamBold
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.Parent = Header
+    
+    -- Title Gradient
+    CreateGradient(Title, {
+        ColorSequenceKeypoint.new(0, Aether.Theme.Primary),
+        ColorSequenceKeypoint.new(1, Aether.Theme.Secondary)
+    }, 0)
+    
+    -- Close Button
+    local CloseBtn = Instance.new("TextButton")
+    CloseBtn.Name = "Close"
+    CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+    CloseBtn.Position = UDim2.new(1, -40, 0, 10)
+    CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 71, 87)
+    CloseBtn.Text = "×"
+    CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CloseBtn.TextSize = 20
+    CloseBtn.Font = Enum.Font.GothamBold
+    CloseBtn.Parent = Header
+    
+    CreateCorner(CloseBtn, UDim.new(0, 8))
+    
+    CloseBtn.MouseEnter:Connect(function()
+        Tween(CloseBtn, {BackgroundColor3 = Color3.fromRGB(255, 100, 100)}, 0.2)
+    end)
+    CloseBtn.MouseLeave:Connect(function()
+        Tween(CloseBtn, {BackgroundColor3 = Color3.fromRGB(255, 71, 87)}, 0.2)
+    end)
+    CloseBtn.MouseButton1Click:Connect(function()
+        Tween(MainFrame, {Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0)}, 0.5)
+        wait(0.5)
+        ScreenGui:Destroy()
+    end)
+    
+    --// Sidebar (แถบด้านข้าง)
+    local Sidebar = Instance.new("Frame")
+    Sidebar.Name = "Sidebar"
+    Sidebar.Size = UDim2.new(0, 160, 1, -50)
+    Sidebar.Position = UDim2.new(0, 0, 0, 50)
+    Sidebar.BackgroundColor3 = Aether.Theme.Surface
+    Sidebar.BackgroundTransparency = 0.7
+    Sidebar.BorderSizePixel = 0
+    Sidebar.Parent = MainFrame
+    
+    CreateCorner(Sidebar, UDim.new(0, 0))
+    
+    -- Sidebar Gradient Accent
+    local SidebarAccent = Instance.new("Frame")
+    SidebarAccent.Name = "Accent"
+    SidebarAccent.Size = UDim2.new(0, 3, 1, 0)
+    SidebarAccent.Position = UDim2.new(1, -3, 0, 0)
+    SidebarAccent.BorderSizePixel = 0
+    SidebarAccent.Parent = Sidebar
+    
+    CreateGradient(SidebarAccent, {
+        ColorSequenceKeypoint.new(0, Aether.Theme.Primary),
+        ColorSequenceKeypoint.new(0.5, Aether.Theme.Secondary),
+        ColorSequenceKeypoint.new(1, Aether.Theme.Accent)
+    }, 90)
+    
+    --// Content Area
+    local Content = Instance.new("Frame")
+    Content.Name = "Content"
+    Content.Size = UDim2.new(1, -160, 1, -50)
+    Content.Position = UDim2.new(0, 160, 0, 50)
+    Content.BackgroundTransparency = 1
+    Content.Parent = MainFrame
+    
+    --// Tab System
+    self.Tabs = {}
+    self.CurrentTab = nil
+    self.Sidebar = Sidebar
+    self.Content = Content
+    
+    -- Animation เปิดตัว
+    MainFrame.Size = UDim2.new(0, 0, 0, 0)
+    MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+    Tween(MainFrame, {Size = UDim2.new(0, 600, 0, 400), Position = UDim2.new(0.5, -300, 0.5, -200)}, 0.6, 0.1)
+    
+    return self
+end
+
+--// Create Tab
+function Aether:CreateTab(name, icon)
+    local tabBtn = Instance.new("TextButton")
+    tabBtn.Name = name
+    tabBtn.Size = UDim2.new(1, -10, 0, 40)
+    tabBtn.Position = UDim2.new(0, 5, 0, 10 + (#self.Tabs * 45))
+    tabBtn.BackgroundColor3 = Aether.Theme.Surface
+    tabBtn.BackgroundTransparency = 1
+    tabBtn.Text = "  " .. (icon or "•") .. "  " .. name
+    tabBtn.TextColor3 = Aether.Theme.TextDark
+    tabBtn.TextSize = 14
+    tabBtn.Font = Enum.Font.GothamSemibold
+    tabBtn.TextXAlignment = Enum.TextXAlignment.Left
+    tabBtn.Parent = self.Sidebar
+    
+    CreateCorner(tabBtn, UDim.new(0, 8))
+    
+    -- Tab Content
+    local tabContent = Instance.new("ScrollingFrame")
+    tabContent.Name = name .. "Content"
+    tabContent.Size = UDim2.new(1, -20, 1, -20)
+    tabContent.Position = UDim2.new(0, 10, 0, 10)
+    tabContent.BackgroundTransparency = 1
+    tabContent.ScrollBarThickness = 4
+    tabContent.ScrollBarImageColor3 = Aether.Theme.Primary
+    tabContent.Visible = false
+    tabContent.Parent = self.Content
+    
+    local UIList = Instance.new("UIListLayout")
+    UIList.Padding = UDim.new(0, 10)
+    UIList.SortOrder = Enum.SortOrder.LayoutOrder
+    UIList.Parent = tabContent
+    
+    -- Tab Logic
+    tabBtn.MouseEnter:Connect(function()
+        if self.CurrentTab ~= name then
+            Tween(tabBtn, {BackgroundTransparency = 0.5, TextColor3 = Aether.Theme.Text}, 0.2)
+        end
+    end)
+    
+    tabBtn.MouseLeave:Connect(function()
+        if self.CurrentTab ~= name then
+            Tween(tabBtn, {BackgroundTransparency = 1, TextColor3 = Aether.Theme.TextDark}, 0.2)
+        end
+    end)
+    
+    tabBtn.MouseButton1Click:Connect(function()
+        self:SwitchTab(name)
+    end)
+    
+    self.Tabs[name] = {
+        Button = tabBtn,
+        Content = tabContent
+    }
+    
+    if not self.CurrentTab then
+        self:SwitchTab(name)
+    end
+    
+    return tabContent
+end
+
+--// Switch Tab
+function Aether:SwitchTab(name)
+    for tabName, tabData in pairs(self.Tabs) do
+        if tabName == name then
+            self.CurrentTab = name
+            tabData.Content.Visible = true
+            Tween(tabData.Button, {BackgroundTransparency = 0.3, TextColor3 = Aether.Theme.Text}, 0.3)
+            
+            -- Gradient indicator
+            local indicator = tabData.Button:FindFirstChild("Indicator")
+            if not indicator then
+                indicator = Instance.new("Frame")
+                indicator.Name = "Indicator"
+                indicator.Size = UDim2.new(0, 3, 0.6, 0)
+                indicator.Position = UDim2.new(0, 0, 0.2, 0)
+                indicator.BorderSizePixel = 0
+                indicator.Parent = tabData.Button
+                
+                CreateGradient(indicator, {
+                    ColorSequenceKeypoint.new(0, Aether.Theme.Primary),
+                    ColorSequenceKeypoint.new(1, Aether.Theme.Secondary)
+                }, 0)
+                CreateCorner(indicator, UDim.new(0, 2))
+            end
+            indicator.Visible = true
+            
+            -- Content animation
+            tabData.Content.Position = UDim2.new(0, 20, 0, 10)
+            Tween(tabData.Content, {Position = UDim2.new(0, 10, 0, 10)}, 0.3)
+        else
+            tabData.Content.Visible = false
+            Tween(tabData.Button, {BackgroundTransparency = 1, TextColor3 = Aether.Theme.TextDark}, 0.3)
+            local indicator = tabData.Button:FindFirstChild("Indicator")
+            if indicator then indicator.Visible = false end
+        end
+    end
+end
+
+--// Create Button (Gradient Style)
+function Aether:CreateButton(parent, text, callback)
+    local btn = Instance.new("TextButton")
+    btn.Name = text
+    btn.Size = UDim2.new(1, 0, 0, 40)
+    btn.BackgroundColor3 = Aether.Theme.Surface
+    btn.Text = text
+    btn.TextColor3 = Aether.Theme.Text
+    btn.TextSize = 14
+    btn.Font = Enum.Font.GothamSemibold
+    btn.Parent = parent
+    
+    CreateCorner(btn, UDim.new(0, 10))
+    
+    -- Gradient Background
+    local gradient = CreateGradient(btn, {
+        ColorSequenceKeypoint.new(0, Aether.Theme.Primary),
+        ColorSequenceKeypoint.new(1, Aether.Theme.Secondary)
+    }, 45, {0, 0.9, 1, 0.9}) -- โปร่งใสมาก
+    
+    local stroke = CreateStroke(btn, Aether.Theme.Primary, 1.5)
+    
+    btn.MouseEnter:Connect(function()
+        Tween(btn, {BackgroundTransparency = 0.3}, 0.2)
+        Tween(stroke, {Transparency = 0.3, Thickness = 2.5}, 0.2)
+    end)
+    
+    btn.MouseLeave:Connect(function()
+        Tween(btn, {BackgroundTransparency = 0}, 0.2)
+        Tween(stroke, {Transparency = 0.8, Thickness = 1.5}, 0.2)
+    end)
+    
+    btn.MouseButton1Click:Connect(function()
+        Tween(btn, {Size = UDim2.new(0.95, 0, 0, 38)}, 0.1)
+        wait(0.1)
+        Tween(btn, {Size = UDim2.new(1, 0, 0, 40)}, 0.1)
+        if callback then callback() end
+    end)
+    
+    return btn
+end
+
+--// Create Toggle (Neon Switch)
+function Aether:CreateToggle(parent, text, default, callback)
+    local container = Instance.new("Frame")
+    container.Name = text .. "Toggle"
+    container.Size = UDim2.new(1, 0, 0, 40)
+    container.BackgroundColor3 = Aether.Theme.Surface
+    container.BackgroundTransparency = 0.5
+    container.Parent = parent
+    
+    CreateCorner(container, UDim.new(0, 10))
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.7, 0, 1, 0)
+    label.Position = UDim2.new(0, 15, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Aether.Theme.Text
+    label.TextSize = 14
+    label.Font = Enum.Font.Gotham
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = container
+    
+    -- Toggle Switch
+    local switch = Instance.new("Frame")
+    switch.Name = "Switch"
+    switch.Size = UDim2.new(0, 44, 0, 24)
+    switch.Position = UDim2.new(1, -60, 0.5, -12)
+    switch.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    switch.Parent = container
+    
+    CreateCorner(switch, UDim.new(0, 12))
+    
+    local circle = Instance.new("Frame")
+    circle.Name = "Circle"
+    circle.Size = UDim2.new(0, 18, 0, 18)
+    circle.Position = UDim2.new(0, 3, 0.5, -9)
+    circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    circle.Parent = switch
+    
+    CreateCorner(circle, UDim.new(1, 0))
+    
+    local enabled = default or false
+    
+    local function UpdateToggle()
+        if enabled then
+            Tween(switch, {BackgroundColor3 = Aether.Theme.Primary}, 0.3)
+            Tween(circle, {Position = UDim2.new(0, 23, 0.5, -9)}, 0.3)
+            -- Glow effect
+            local glow = switch:FindFirstChild("Glow")
+            if not glow then
+                glow = Instance.new("ImageLabel")
+                glow.Name = "Glow"
+                glow.Size = UDim2.new(1, 20, 1, 20)
+                glow.Position = UDim2.new(0, -10, 0, -10)
+                glow.BackgroundTransparency = 1
+                glow.Image = "rbxassetid://131604521937076"
+                glow.ImageColor3 = Aether.Theme.Primary
+                glow.ImageTransparency = 0.8
+                glow.Parent = switch
+            end
+            Tween(glow, {ImageTransparency = 0.5}, 0.3)
+        else
+            Tween(switch, {BackgroundColor3 = Color3.fromRGB(60, 60, 70)}, 0.3)
+            Tween(circle, {Position = UDim2.new(0, 3, 0.5, -9)}, 0.3)
+            local glow = switch:FindFirstChild("Glow")
+            if glow then Tween(glow, {ImageTransparency = 1}, 0.3) end
+        end
+        if callback then callback(enabled) end
+    end
+    
+    -- Click area
+    local clickArea = Instance.new("TextButton")
+    clickArea.Size = UDim2.new(1, 0, 1, 0)
+    clickArea.BackgroundTransparency = 1
+    clickArea.Text = ""
+    clickArea.Parent = container
+    
+    clickArea.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        UpdateToggle()
+    end)
+    
+    if enabled then UpdateToggle() end
+    
+    return container
+end
+
+--// Create Slider (Gradient Track)
+function Aether:CreateSlider(parent, text, min, max, default, callback)
+    local container = Instance.new("Frame")
+    container.Name = text .. "Slider"
+    container.Size = UDim2.new(1, 0, 0, 60)
+    container.BackgroundColor3 = Aether.Theme.Surface
+    container.BackgroundTransparency = 0.5
+    container.Parent = parent
+    
+    CreateCorner(container, UDim.new(0, 10))
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.6, 0, 0, 20)
+    label.Position = UDim2.new(0, 15, 0, 8)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Aether.Theme.Text
+    label.TextSize = 14
+    label.Font = Enum.Font.Gotham
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = container
+    
+    local valueLabel = Instance.new("TextLabel")
+    valueLabel.Size = UDim2.new(0.3, 0, 0, 20)
+    valueLabel.Position = UDim2.new(0.7, -10, 0, 8)
+    valueLabel.BackgroundTransparency = 1
+    valueLabel.Text = tostring(default or min)
+    valueLabel.TextColor3 = Aether.Theme.Secondary
+    valueLabel.TextSize = 14
+    valueLabel.Font = Enum.Font.GothamBold
+    valueLabel.TextXAlignment = Enum.TextXAlignment.Right
+    valueLabel.Parent = container
+    
+    -- Track
+    local track = Instance.new("Frame")
+    track.Name = "Track"
+    track.Size = UDim2.new(1, -30, 0, 6)
+    track.Position = UDim2.new(0, 15, 0, 38)
+    track.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    track.BorderSizePixel = 0
+    track.Parent = container
+    
+    CreateCorner(track, UDim.new(0, 3))
+    
+    -- Fill (Gradient)
+    local fill = Instance.new("Frame")
+    fill.Name = "Fill"
+    fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+    fill.BackgroundColor3 = Aether.Theme.Primary
+    fill.BorderSizePixel = 0
+    fill.Parent = track
+    
+    CreateGradient(fill, {
+        ColorSequenceKeypoint.new(0, Aether.Theme.Primary),
+        ColorSequenceKeypoint.new(1, Aether.Theme.Secondary)
+    }, 0)
+    CreateCorner(fill, UDim.new(0, 3))
+    
+    -- Thumb
+    local thumb = Instance.new("Frame")
+    thumb.Name = "Thumb"
+    thumb.Size = UDim2.new(0, 16, 0, 16)
+    thumb.Position = UDim2.new((default - min) / (max - min), -8, 0.5, -8)
+    thumb.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    thumb.BorderSizePixel = 0
+    thumb.Parent = track
+    
+    CreateCorner(thumb, UDim.new(1, 0))
+    CreateStroke(thumb, Aether.Theme.Primary, 2)
+    
+    -- Glow
+    local glow = Instance.new("ImageLabel")
+    glow.Name = "Glow"
+    glow.Size = UDim2.new(1, 10, 1, 10)
+    glow.Position = UDim2.new(0, -5, 0, -5)
+    glow.BackgroundTransparency = 1
+    glow.Image = "rbxassetid://131604521937076"
+    glow.ImageColor3 = Aether.Theme.Primary
+    glow.ImageTransparency = 0.7
+    glow.Parent = thumb
+    
+    -- Slider Logic
+    local dragging = false
+    local currentValue = default or min
+    
+    local function UpdateSlider(input)
+        local pos = math.clamp((input.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+        currentValue = math.floor(min + (pos * (max - min)))
+        valueLabel.Text = tostring(currentValue)
+        Tween(fill, {Size = UDim2.new(pos, 0, 1, 0)}, 0.1)
+        Tween(thumb, {Position = UDim2.new(pos, -8, 0.5, -8)}, 0.1)
+        if callback then callback(currentValue) end
+    end
+    
+    track.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            UpdateSlider(input)
+        end
+    end)
+    
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            UpdateSlider(input)
+        end
+    end)
+    
+    game:GetService("UserInputService").InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+    
+    return container
+end
+
+--// Create Dropdown (Glass Style)
+function Aether:CreateDropdown(parent, text, options, callback)
+    local container = Instance.new("Frame")
+    container.Name = text .. "Dropdown"
+    container.Size = UDim2.new(1, 0, 0, 40)
+    container.BackgroundColor3 = Aether.Theme.Surface
+    container.BackgroundTransparency = 0.5
+    container.ClipsDescendants = true
+    container.Parent = parent
+    
+    CreateCorner(container, UDim.new(0, 10))
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.7, 0, 0, 40)
+    label.Position = UDim2.new(0, 15, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Aether.Theme.Text
+    label.TextSize = 14
+    label.Font = Enum.Font.Gotham
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = container
+    
+    local selected = Instance.new("TextLabel")
+    selected.Size = UDim2.new(0.3, -10, 0, 40)
+    selected.Position = UDim2.new(0.7, 0, 0, 0)
+    selected.BackgroundTransparency = 1
+    selected.Text = options[1] or "Select..."
+    selected.TextColor3 = Aether.Theme.Secondary
+    selected.TextSize = 14
+    selected.Font = Enum.Font.GothamBold
+    selected.TextXAlignment = Enum.TextXAlignment.Right
+    selected.Parent = container
+    
+    local arrow = Instance.new("TextLabel")
+    arrow.Size = UDim2.new(0, 20, 0, 40)
+    arrow.Position = UDim2.new(1, -25, 0, 0)
+    arrow.BackgroundTransparency = 1
+    arrow.Text = "▼"
+    arrow.TextColor3 = Aether.Theme.TextDark
+    arrow.TextSize = 12
+    arrow.Parent = container
+    
+    local expanded = false
+    local optionHeight = 35
+    
+    local clickArea = Instance.new("TextButton")
+    clickArea.Size = UDim2.new(1, 0, 0, 40)
+    clickArea.BackgroundTransparency = 1
+    clickArea.Text = ""
+    clickArea.Parent = container
+    
+    local optionsFrame = Instance.new("Frame")
+    optionsFrame.Name = "Options"
+    optionsFrame.Size = UDim2.new(1, 0, 0, 0)
+    optionsFrame.Position = UDim2.new(0, 0, 0, 40)
+    optionsFrame.BackgroundColor3 = Aether.Theme.Surface
+    optionsFrame.BackgroundTransparency = 0.3
+    optionsFrame.Visible = false
+    optionsFrame.Parent = container
+    
+    CreateCorner(optionsFrame, UDim.new(0, 0))
+    
+    local UIList = Instance.new("UIListLayout")
+    UIList.Parent = optionsFrame
+    
+    for i, option in ipairs(options) do
+        local optBtn = Instance.new("TextButton")
+        optBtn.Size = UDim2.new(1, 0, 0, optionHeight)
+        optBtn.BackgroundColor3 = Aether.Theme.Surface
+        optBtn.BackgroundTransparency = 1
+        optBtn.Text = option
+        optBtn.TextColor3 = Aether.Theme.TextDark
+        optBtn.TextSize = 13
+        optBtn.Font = Enum.Font.Gotham
+        optBtn.Parent = optionsFrame
+        
+        optBtn.MouseEnter:Connect(function()
+            Tween(optBtn, {BackgroundTransparency = 0.5, TextColor3 = Aether.Theme.Text}, 0.2)
+        end)
+        optBtn.MouseLeave:Connect(function()
+            Tween(optBtn, {BackgroundTransparency = 1, TextColor3 = Aether.Theme.TextDark}, 0.2)
+        end)
+        optBtn.MouseButton1Click:Connect(function()
+            selected.Text = option
+            expanded = false
+            Tween(container, {Size = UDim2.new(1, 0, 0, 40)}, 0.3)
+            Tween(arrow, {Rotation = 0}, 0.3)
+            optionsFrame.Visible = false
+            if callback then callback(option) end
+        end)
+    end
+    
+    clickArea.MouseButton1Click:Connect(function()
+        expanded = not expanded
+        if expanded then
+            optionsFrame.Visible = true
+            local totalHeight = math.min(#options * optionHeight, 150)
+            Tween(container, {Size = UDim2.new(1, 0, 0, 40 + totalHeight)}, 0.3)
+            Tween(arrow, {Rotation = 180}, 0.3)
+        else
+            Tween(container, {Size = UDim2.new(1, 0, 0, 40)}, 0.3)
+            Tween(arrow, {Rotation = 0}, 0.3)
+            wait(0.3)
+            optionsFrame.Visible = false
+        end
+    end)
+    
+    return container
+end
+
+--// Create Label (Gradient Text)
+function Aether:CreateLabel(parent, text)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 0, 30)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Aether.Theme.Text
+    label.TextSize = 16
+    label.Font = Enum.Font.GothamBold
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = parent
+    
+    return label
+end
+
+--// Create Section Divider (Gradient Line)
+function Aether:CreateDivider(parent, title)
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(1, 0, 0, 30)
+    container.BackgroundTransparency = 1
+    container.Parent = parent
+    
+    if title then
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(0, 100, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Text = title
+        label.TextColor3 = Aether.Theme.TextDark
+        label.TextSize = 12
+        label.Font = Enum.Font.Gotham
+        label.Parent = container
+    end
+    
+    local line = Instance.new("Frame")
+    line.Size = UDim2.new(1, 0, 0, 2)
+    line.Position = UDim2.new(0, 0, 0.5, 0)
+    line.BorderSizePixel = 0
+    line.Parent = container
+    
+    CreateGradient(line, {
+        ColorSequenceKeypoint.new(0, Aether.Theme.Primary),
+        ColorSequenceKeypoint.new(0.5, Aether.Theme.Secondary),
+        ColorSequenceKeypoint.new(1, Aether.Theme.Accent)
+    }, 0)
+    
+    return container
+end
+
+--// Keybind System
+function Aether:SetKeybind(key, callback)
+    game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
+        if not gameProcessed and input.KeyCode == key then
+            callback()
+        end
+    end)
+end
+
+--// Notification System (Toast)
+function Aether:Notify(title, message, duration)
+    duration = duration or 3
+    
+    local notif = Instance.new("Frame")
+    notif.Size = UDim2.new(0, 280, 0, 80)
+    notif.Position = UDim2.new(1, 300, 1, -100)
+    notif.BackgroundColor3 = Aether.Theme.Surface
+    notif.BackgroundTransparency = 0.1
+    notif.BorderSizePixel = 0
+    notif.Parent = playerGui:FindFirstChild("AetherHub") or playerGui
+    
+    CreateCorner(notif, UDim.new(0, 12))
+    CreateStroke(notif, Aether.Theme.Primary, 1.5)
+    
+    local gradientLine = Instance.new("Frame")
+    gradientLine.Size = UDim2.new(1, 0, 0, 3)
+    gradientLine.Position = UDim2.new(0, 0, 0, 0)
+    gradientLine.BorderSizePixel = 0
+    gradientLine.Parent = notif
+    
+    CreateGradient(gradientLine, {
+        ColorSequenceKeypoint.new(0, Aether.Theme.Primary),
+        ColorSequenceKeypoint.new(1, Aether.Theme.Secondary)
+    }, 0)
+    
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -20, 0, 25)
+    titleLabel.Position = UDim2.new(0, 10, 0, 10)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = title
+    titleLabel.TextColor3 = Aether.Theme.Text
+    titleLabel.TextSize = 16
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.Parent = notif
+    
+    local msgLabel = Instance.new("TextLabel")
+    msgLabel.Size = UDim2.new(1, -20, 0, 40)
+    msgLabel.Position = UDim2.new(0, 10, 0, 35)
+    msgLabel.BackgroundTransparency = 1
+    msgLabel.Text = message
+    msgLabel.TextColor3 = Aether.Theme.TextDark
+    msgLabel.TextSize = 13
+    msgLabel.Font = Enum.Font.Gotham
+    msgLabel.TextWrapped = true
+    msgLabel.Parent = notif
+    
+    -- Animate in
+    Tween(notif, {Position = UDim2.new(1, -300, 1, -100)}, 0.5)
+    
+    wait(duration)
+    
+    -- Animate out
+    Tween(notif, {Position = UDim2.new(1, 300, 1, -100)}, 0.5)
+    wait(0.5)
+    notif:Destroy()
+end
+
+--// Return Library
+return Aether
