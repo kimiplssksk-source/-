@@ -1,0 +1,410 @@
+-- // Roblox Modern UI Library
+-- // Created by Qwen Assistant
+
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+
+-- สร้าง ScreenGui หลัก
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ModernHubUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = game.CoreGui -- หรือ game.Players.LocalPlayer:WaitForChild("PlayerGui") ถ้าใช้ใน Studio
+
+-- ฟังก์ชันช่วยสร้าง Object
+local function CreateInstance(className, properties)
+	local inst = Instance.new(className)
+	for prop, val in pairs(properties) do
+		inst[prop] = val
+	end
+	return inst
+end
+
+-- // Main Frame (หน้าต่างหลัก)
+local MainFrame = CreateInstance("Frame", {
+	Name = "MainFrame",
+	Size = UDim2.new(0, 500, 0, 350),
+	Position = UDim2.new(0.5, -250, 0.5, -175),
+	BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+	BorderSizePixel = 0,
+	Parent = ScreenGui
+})
+
+-- มุมโค้ง
+CreateInstance("UICorner", {CornerRadius = UDim.new(0, 8), Parent = MainFrame})
+
+-- แถบด้านบน (Top Bar) สำหรับลากและชื่อ
+local TopBar = CreateInstance("Frame", {
+	Name = "TopBar",
+	Size = UDim2.new(1, 0, 0, 30),
+	BackgroundColor3 = Color3.fromRGB(45, 45, 45),
+	BorderSizePixel = 0,
+	Parent = MainFrame
+})
+CreateInstance("UICorner", {CornerRadius = UDim.new(0, 8), Parent = TopBar}) -- โค้งเฉพาะบน
+-- แก้ไขมุมล่างของ TopBar ให้ตรงเพื่อให้ต่อกับ Body ได้สนิท (เทคนิคง่ายๆ คือใช้ ClipDescendants หรือปรับขนาด)
+-- เพื่อความง่าย เราจะปล่อยไว้แบบนี้หรือใช้ ImageLabel แต่ Frame ธรรมดาก็พอ
+
+local TitleLabel = CreateInstance("TextLabel", {
+	Name = "Title",	Size = UDim2.new(0, 200, 1, 0),
+	Position = UDim2.new(0, 10, 0, 0),
+	BackgroundTransparency = 1,
+	Text = "MY HUB | V1",
+	TextColor3 = Color3.fromRGB(255, 255, 255),
+	TextSize = 14,
+	Font = Enum.Font.GothamBold,
+	TextXAlignment = Enum.TextXAlignment.Left,
+	Parent = TopBar
+})
+
+-- ปุ่มปิด (Close Button)
+local CloseBtn = CreateInstance("TextButton", {
+	Name = "CloseBtn",
+	Size = UDim2.new(0, 20, 0, 20),
+	Position = UDim2.new(1, -25, 0, 5),
+	BackgroundColor3 = Color3.fromRGB(255, 90, 90),
+	Text = "",
+	Parent = TopBar
+})
+CreateInstance("UICorner", {CornerRadius = UDim.new(0, 4), Parent = CloseBtn})
+
+-- ส่วนเนื้อหา (Body)
+local Body = CreateInstance("Frame", {
+	Name = "Body",
+	Size = UDim2.new(1, 0, 1, -30),
+	Position = UDim2.new(0, 0, 0, 30),
+	BackgroundTransparency = 1,
+	ClipsDescendants = true,
+	Parent = MainFrame
+})
+
+-- Sidebar (เมนูทางซ้าย)
+local Sidebar = CreateInstance("Frame", {
+	Name = "Sidebar",
+	Size = UDim2.new(0, 120, 1, 0),
+	BackgroundColor3 = Color3.fromRGB(35, 35, 35),
+	BorderSizePixel = 0,
+	Parent = Body
+})
+CreateInstance("UICorner", {CornerRadius = UDim.new(0, 0), Parent = Sidebar}) -- ไม่จำเป็นต้องโค้งถ้าอยู่ข้างใน
+
+-- Container สำหรับเก็บ Tab Buttons
+local TabContainer = CreateInstance("ScrollingFrame", {
+	Name = "TabContainer",
+	Size = UDim2.new(1, 0, 1, 0),
+	BackgroundTransparency = 1,
+	ScrollBarThickness = 0,
+	CanvasSize = UDim2.new(0, 0, 0, 0),
+	Parent = Sidebar})
+CreateInstance("UIListLayout", {
+	SortOrder = Enum.SortOrder.LayoutOrder,
+	Padding = UDim.new(0, 5),
+	Parent = TabContainer
+})
+
+-- Pages Container (พื้นที่แสดงเนื้อหาแต่ละ Tab)
+local PagesContainer = CreateInstance("Frame", {
+	Name = "PagesContainer",
+	Size = UDim2.new(1, -120, 1, 0),
+	Position = UDim2.new(0, 120, 0, 0),
+	BackgroundTransparency = 1,
+	Parent = Body
+})
+
+-- // Logic การทำงาน (Dragging & Tabs)
+
+-- 1. Draggable Logic
+local dragging
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+	local delta = input.Position - dragStart
+	MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+TopBar.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = MainFrame.Position
+		
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+TopBar.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)	if input == dragInput and dragging then
+		update(input)
+	end
+end)
+
+CloseBtn.MouseButton1Click:Connect(function()
+	ScreenGui:Destroy()
+end)
+
+-- 2. Library Functions (API)
+local Library = {}
+local CurrentPage = nil
+
+function Library:CreateWindow(WindowName)
+	TitleLabel.Text = WindowName
+	return self
+end
+
+function Library:CreateTab(TabName)
+	-- สร้างปุ่มที่ Sidebar
+	local TabBtn = CreateInstance("TextButton", {
+		Name = TabName .. "_Btn",
+		Size = UDim2.new(1, -10, 0, 30),
+		Position = UDim2.new(0, 5, 0, 0),
+		BackgroundColor3 = Color3.fromRGB(45, 45, 45),
+		Text = TabName,
+		TextColor3 = Color3.fromRGB(200, 200, 200),
+		TextSize = 12,
+		Font = Enum.Font.GothamMedium,
+		Parent = TabContainer
+	})
+	CreateInstance("UICorner", {CornerRadius = UDim.new(0, 6), Parent = TabBtn})
+	
+	-- อัปเดต CanvasSize ของ Sidebar
+	local ListLayout = TabContainer.UIListLayout
+	TabContainer.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 10)
+
+	-- สร้าง Page เนื้อหา
+	local Page = CreateInstance("ScrollingFrame", {
+		Name = TabName .. "_Page",
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 1,
+		ScrollBarThickness = 4,
+		Visible = false,
+		Parent = PagesContainer
+	})
+	CreateInstance("UIListLayout", {
+		SortOrder = Enum.SortOrder.LayoutOrder,
+		Padding = UDim.new(0, 10),
+		HorizontalAlignment = Enum.HorizontalAlignment.Center,		Parent = Page
+	})
+	CreateInstance("UIPadding", {
+		PaddingTop = UDim.new(0, 10),
+		PaddingBottom = UDim.new(0, 10),
+		Parent = Page
+	})
+
+	-- จัดการการคลิกเปลี่ยน Tab
+	TabBtn.MouseButton1Click:Connect(function()
+		-- ซ่อนทุก Page
+		for _, child in pairs(PagesContainer:GetChildren()) do
+			if child:IsA("ScrollingFrame") then
+				child.Visible = false
+			end
+		end
+		-- รีเซ็ตสีปุ่มอื่น
+		for _, btn in pairs(TabContainer:GetChildren()) do
+			if btn:IsA("TextButton") then
+				btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+				btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+			end
+		end
+		
+		-- แสดง Page นี้
+		Page.Visible = true
+		-- ไฮไลท์ปุ่มนี้
+		TabBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 255) -- สีน้ำเงินสวยๆ
+		TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		
+		CurrentPage = Page
+	end)
+	
+	-- ถ้าเป็น Tab แรก ให้เปิดเลย
+	if #PagesContainer:GetChildren() == 1 then
+		Page.Visible = true
+		TabBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 255)
+		TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		CurrentPage = Page
+	end
+
+	local TabContent = {}
+
+	-- // Components ภายใน Tab
+	
+	-- 1. Button
+	function TabContent:CreateButton(ButtonName, Callback)
+		local Btn = CreateInstance("TextButton", {
+			Name = "Button_" .. ButtonName,
+			Size = UDim2.new(0, 350, 0, 35),			BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+			Text = ButtonName,
+			TextColor3 = Color3.fromRGB(255, 255, 255),
+			TextSize = 13,
+			Font = Enum.Font.GothamBold,
+			Parent = CurrentPage
+		})
+		CreateInstance("UICorner", {CornerRadius = UDim.new(0, 6), Parent = Btn})
+		
+		-- Hover Effect
+		Btn.MouseEnter:Connect(function()
+			TweenService:Create(Btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(70, 70, 70)}):Play()
+		end)
+		Btn.MouseLeave:Connect(function()
+			TweenService:Create(Btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
+		end)
+		
+		Btn.MouseButton1Click:Connect(function()
+			pcall(Callback)
+			-- Animation กด
+			TweenService:Create(Btn, TweenInfo.new(0.1), {Size = UDim2.new(0, 345, 0, 30)}):Play()
+			wait(0.1)
+			TweenService:Create(Btn, TweenInfo.new(0.1), {Size = UDim2.new(0, 350, 0, 35)}):Play()
+		end)
+		
+		-- อัปเดต Scroll
+		local LL = CurrentPage.UIListLayout
+		CurrentPage.CanvasSize = UDim2.new(0, 0, 0, LL.AbsoluteContentSize.Y + 20)
+	end
+
+	-- 2. Toggle
+	function TabContent:CreateToggle(ToggleName, Default, Callback)
+		local ToggleFrame = CreateInstance("Frame", {
+			Name = "Toggle_" .. ToggleName,
+			Size = UDim2.new(0, 350, 0, 35),
+			BackgroundTransparency = 1,
+			Parent = CurrentPage
+		})
+		
+		local Label = CreateInstance("TextLabel", {
+			Size = UDim2.new(1, -40, 1, 0),
+			Position = UDim2.new(0, 10, 0, 0),
+			BackgroundTransparency = 1,
+			Text = ToggleName,
+			TextColor3 = Color3.fromRGB(220, 220, 220),
+			TextSize = 13,
+			Font = Enum.Font.GothamMedium,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			Parent = ToggleFrame
+		})		
+		local ToggleBox = CreateInstance("TextButton", {
+			Name = "Box",
+			Size = UDim2.new(0, 30, 0, 30),
+			Position = UDim2.new(1, -35, 0.5, -15),
+			BackgroundColor3 = Color3.fromRGB(100, 100, 100),
+			Text = "",
+			Parent = ToggleFrame
+		})
+		CreateInstance("UICorner", {CornerRadius = UDim.new(0, 4), Parent = ToggleBox})
+		
+		local Status = Default or false
+		
+		local function UpdateVisual()
+			if Status then
+				ToggleBox.BackgroundColor3 = Color3.fromRGB(60, 255, 60) -- เขียว
+			else
+				ToggleBox.BackgroundColor3 = Color3.fromRGB(100, 100, 100) -- เทา
+			end
+			pcall(Callback, Status)
+		end
+		
+		UpdateVisual()
+		
+		ToggleBox.MouseButton1Click:Connect(function()
+			Status = not Status
+			UpdateVisual()
+		end)
+		
+		-- อัปเดต Scroll
+		local LL = CurrentPage.UIListLayout
+		CurrentPage.CanvasSize = UDim2.new(0, 0, 0, LL.AbsoluteContentSize.Y + 20)
+	end
+
+	-- 3. Slider
+	function TabContent:CreateSlider(SliderName, Min, Max, Default, Callback)
+		local SliderFrame = CreateInstance("Frame", {
+			Name = "Slider_" .. SliderName,
+			Size = UDim2.new(0, 350, 0, 50),
+			BackgroundTransparency = 1,
+			Parent = CurrentPage
+		})
+		
+		local Label = CreateInstance("TextLabel", {
+			Size = UDim2.new(1, 0, 0, 20),
+			BackgroundTransparency = 1,
+			Text = SliderName .. ": " .. Default,
+			TextColor3 = Color3.fromRGB(220, 220, 220),
+			TextSize = 13,
+			Font = Enum.Font.GothamMedium,			TextXAlignment = Enum.TextXAlignment.Left,
+			Parent = SliderFrame
+		})
+		
+		local SliderBg = CreateInstance("Frame", {
+			Name = "Bg",
+			Size = UDim2.new(1, -20, 0, 10),
+			Position = UDim2.new(0, 10, 0, 30),
+			BackgroundColor3 = Color3.fromRGB(60, 60, 60),
+			Parent = SliderFrame
+		})
+		CreateInstance("UICorner", {CornerRadius = UDim.new(0, 5), Parent = SliderBg})
+		
+		local SliderFill = CreateInstance("Frame", {
+			Name = "Fill",
+			Size = UDim2.new((Default - Min) / (Max - Min), 0, 1, 0),
+			BackgroundColor3 = Color3.fromRGB(60, 60, 255),
+			Parent = SliderBg
+		})
+		CreateInstance("UICorner", {CornerRadius = UDim.new(0, 5), Parent = SliderFill})
+		
+		local SliderBtn = CreateInstance("TextButton", {
+			Name = "Btn",
+			Size = UDim2.new(0, 15, 0, 15),
+			Position = UDim2.new((Default - Min) / (Max - Min), -7, 0.5, -7),
+			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+			Text = "",
+			Parent = SliderBg
+		})
+		CreateInstance("UICorner", {CornerRadius = UDim.new(0, 8), Parent = SliderBtn})
+		
+		local Sliding = false
+		
+		local function UpdateSlider(Input)
+			local Pos = UDim2.new(math.clamp((Input.Position.X - SliderBg.AbsolutePosition.X) / SliderBg.AbsoluteSize.X, 0, 1), 0, 0.5, -7)
+			SliderBtn.Position = Pos
+			SliderFill.Size = UDim2.new(Pos.X.Scale, 0, 1, 0)
+			
+			local Value = math.floor(((Pos.X.Scale * (Max - Min)) + Min) * 10) / 10
+			Label.Text = SliderName .. ": " .. tostring(Value)
+			pcall(Callback, Value)
+		end
+		
+		SliderBtn.MouseButton1Down:Connect(function()
+			Sliding = true
+		end)
+		
+		UserInputService.InputEnded:Connect(function(Input)
+			if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+				Sliding = false			end
+		end)
+		
+		UserInputService.InputChanged:Connect(function(Input)
+			if Sliding and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch) then
+				UpdateSlider(Input)
+			end
+		end)
+		
+		-- อัปเดต Scroll
+		local LL = CurrentPage.UIListLayout
+		CurrentPage.CanvasSize = UDim2.new(0, 0, 0, LL.AbsoluteContentSize.Y + 20)
+	end
+
+	return TabContent
+end
+
+return Library
